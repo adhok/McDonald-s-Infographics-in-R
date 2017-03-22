@@ -1,0 +1,218 @@
+---
+title: "Plots With McDOnald's Color Scheme"
+author: "Pradeep Adhokshaja"
+date: "10 March 2017"
+output: 
+  html_document: 
+    fig_height: 7
+    fig_width: 10
+    theme: journal
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Introduction and Data
+
+McDonald's is a world wide fast food franchise which was founded in 1940. It started off as a barbeque stall in 1940. It now has branches in more than 100 countries.
+
+It serves more than 68 million customers daily across 37000 outlets around the world.It is also the second largest private employer. In this post, we will be looking at the dataset submitted at [Kaggle](https://www.kaggle.com/mcdonalds/nutrition-facts).
+
+
+I came across a post on [R-Bloggers](https://www.r-bloggers.com/r-how-to-layout-and-design-an-infographic/) on creating infographics using R. Being excited by the prospects of creating a similar infographic, I got to work.
+
+
+## Data Import and Characteristics
+
+
+
+```{r}
+library(tidyverse)
+library(plotly)
+
+food <- read.csv("menu.csv",stringsAsFactors = F,header=T)
+
+head(food)
+plotTheme <- function(base_size = 12) {
+  theme(
+    text = element_text( color = "#ffc300"),
+    plot.title = element_text(size = 10,colour = "#ffc300",hjust=0.5),
+    plot.subtitle = element_text(face="italic"),
+    plot.caption = element_text(hjust=0),
+    panel.background = element_rect(fill="#dd1021",colour="#dd1021"),
+    panel.grid.major = element_line("grey80", size = 0.1),
+    panel.grid.minor = element_blank(),
+    strip.text = element_text(size=12),
+    axis.title = element_text(size=8),
+    axis.text = element_text(size=8),
+    axis.title.x = element_text(hjust=1),
+    axis.title.y = element_text(hjust=1),
+    plot.background = element_rect(fill="#dd1021"),
+    legend.background = element_blank(),
+    legend.title = element_text(colour = "black", face = "bold"),
+    legend.text = element_text(colour = "black", face = "bold"),
+    strip.background = element_rect(fill = "#ffc300"),
+    axis.ticks=element_line(colour="#ffc300"),
+    panel.grid.major.y = element_line(colour = "#ffc300"),
+    panel.grid.major.x = element_line(colour = "#ffc300"),
+    axis.text.x = element_text(colour="#ffc300"),
+    axis.text.y = element_text(colour="#ffc300")
+    )
+  
+}
+
+names(food) <- c("Category", "Item", "Serving.Size", "Calories", "Calories.from.Fat", 
+"Total.Fat", "Daily_Fat_Value", "Saturated.Fat", "Daily_Sat._Fat_Value", 
+"Trans.Fat", "Cholesterol", "Daily_Chol_Value", "Sodium", 
+"Daily_Sodium_Value", "Carbohydrates", "Daily_Carbohydrate_Value", 
+"Dietary_Fiber", "Daily_Dietary_Fiber", "Sugars", "Protein", 
+"Daily_Vitamin_A_value", "Daily_Vitamin_C_value", "Daily_Calcium_Value", 
+"Daily_Iron_Value")
+
+```
+
+The data is made of 24 variables and 260 observations.
+
+
+## Mean Content Daily Value
+
+
+```{r}
+p1 <-food %>% group_by(Category)%>%
+  summarise(
+    vit_a = mean(Daily_Vitamin_A_value,na.rm=T),
+    vit_c = mean(Daily_Vitamin_C_value,na.rm=T),
+    iron = mean(Daily_Iron_Value,na.rm=T),
+    calcium = mean(Daily_Calcium_Value,na.rm=T),
+    carbs = mean(Daily_Carbohydrate_Value,na.rm=T),
+    dietary_fiber = mean(Daily_Dietary_Fiber,na.rm=T),
+    sodium= mean(Daily_Sodium_Value,na.rm=T),
+    cholestrol = mean(Daily_Chol_Value,na.rm=T)
+    
+    ) %>%
+  gather(type,value,2:9) %>%
+  ggplot(aes(x=Category,y=value))+geom_bar(stat="identity",fill="#ffc300")+
+  facet_wrap(~type,ncol=3)+plotTheme()+labs(title="Average Daily Content")+theme(axis.text.x = element_text(size=4,colour ="#ffc300"))+coord_flip()
+p1
+
+
+
+
+
+```
+
+
+The above plot shows the average daily content of the different kinds of meals that you can buy at McDonald's. The breakfasts at McDOnald's contain the highest average amount of cholestrol. This is followed by the beef and pork type of McDonald's meal.The meal which has the least average amount of cholestrol is the beverage.
+
+Customers who are aiming at keeping their sodium levels at check should avoid consuming beef and pork,breakfast and chicken and fish type of meals.
+
+Salads contain the highest average dietary fiber content. Overall, they are the healthiest items to buy a McDonald's.
+
+
+## Mean Sugar,Sodium,Carbs,Cholestrol,Calories
+
+```{r}
+
+p2<-food %>% group_by(Category)%>%
+  summarise(
+    sugar = mean(Sugars,na.rm=T),
+    sodium = mean(Sodium,na.rm=T),
+    carbohydrates = mean(Carbohydrates,na.rm=T),
+    cholesterol = mean(Cholesterol,na.rm=T),
+    Calories = mean(Calories,na.rm=T),
+    protein = mean(Protein,na.rm=T)
+    
+    ) %>%
+  gather(type,value,2:7) %>%
+  ggplot(aes(x=Category,y=(value)))+geom_bar(stat="identity",fill="#ffc300")+
+  facet_wrap(~type,ncol=3)+plotTheme()+labs(title="Mean Sugar,Sodium,Carbs,Cholestrol,Calories")+theme(axis.text.x = element_text(size=4))+coord_flip()
+p2
+
+
+```
+
+The above plot shows the mean sugar,sodium,protein,cholesterol,carbohydrate and calories content.*Smoothies and shakes* contain the highest average amount of calories.
+
+## Fats Present
+
+
+```{r}
+p3<-food %>% group_by(Category)%>%
+  summarise(
+    totalfat = mean(Total.Fat,na.rm=T),
+    saturatedfat = mean(Saturated.Fat,na.rm=T)
+    
+    ) %>%
+  gather(type,value,c(2,3)) %>%
+  ggplot(aes(x=Category,y=(value)))+geom_bar(stat="identity",fill="#ffc300")+
+  facet_wrap(~type,ncol=3)+plotTheme()+labs(title="Fats Present")+theme(axis.text.x = element_text(size=6,colour="#ffc300"),aspect.ratio = 3/4)+coord_polar()
+p3
+
+```
+
+
+## Distribution of Percentage Calories from Fat
+
+
+```{r}
+
+library(tidyr)
+temp <- food %>% na.omit() %>% mutate(per_fat = 100*(Calories.from.Fat/Calories)) 
+p4 <- ggplot(data=temp,aes(x=per_fat))+
+  geom_histogram(position="identity",alpha=0.6,fill="#ffc300")+plotTheme()+labs(title="Percentage Calories from Fat",x="% Fat",y="Count",caption="")+facet_wrap(~Category)
+
+p4
+
+```
+
+
+## Plots
+
+```{r eval=FALSE}
+
+
+#blank <- grid.rect(gp=gpar(col="white"))
+
+# Create a an ordered list of the plots we want to use, including 'blank' 
+# which we will place in the plot to create white spac
+library(gridExtra)
+library(grid)
+library(gridBase)
+library(useful)
+library(ggplot2)
+library(showtext)
+library(extrafont)
+library(extrafontdb)
+#font_import("C:\Windows\Fonts\Insaniburger Regular.ttf")
+png("mcd.png", width = 10, height = 20, units = "in", res = 500)
+
+grid.newpage()
+pushViewport(viewport(layout = grid.layout(5, 5)))
+grid.rect(gp=gpar(fill="#dd1021",col="#dd1021"))
+
+grid.text("M", y = unit(1, "npc"), x = unit(0.5, "npc"), vjust = 1.5, hjust = .5, gp = gpar(fontfamily = "McLetters", col = "#ffc300", cex = 8, alpha = 0.9))
+grid.rect(gp = gpar(fill = "#ffc300", col = "#ffc300"), x = unit(0.5, "npc"), y = unit(0.83, "npc"), width = unit(1, "npc"), height = unit(0.11, "npc"))
+
+grid.text("DATA INFO", vjust = 0, hjust = 0, x = unit(0.01, "npc"), y = unit(0.86, "npc"), gp = gpar(fontfamily = "McLetters", col = "#ffc300", cex = 1.2))
+grid.text(paste(
+  "Data Source",
+  "Author",
+  "Date", sep = "\n"), vjust = 0, hjust = 0, x = unit(0.01, "npc"), y = unit(0.83, "npc"), gp = gpar(fontfamily = "McLetters", col = "#dd1021", cex = 1))
+grid.text(paste(
+  "https://www.kaggle.com/mcdonalds/nutrition-facts",
+  "Pradeep Adhokshaja",
+  "17-March-2017", sep = "\n"), vjust = 0, hjust = 0, x = unit(0.15, "npc"), y = unit(0.83, "npc"), gp = gpar(fontfamily = "McLetters", col = "#dd1021", cex = 1))
+
+print(p3, vp = vplayout(5, 1:5))
+print(p4, vp = vplayout(3, 1:5))
+print(p1, vp = vplayout(4, 1:5))
+print(p2,vp = vplayout(2,1:5))
+#grid.rect(gp = gpar(fill = "#dd1021", col = "#dd1021"), x = unit(0.5, "npc"), y = unit(0.82, "npc"), width = unit(1, "npc"), height = unit(0.11, "npc"))
+
+dev.off()
+```
+
+![](https://raw.githubusercontent.com/adhok/McDonald-s-Infographics-in-R/master/mcd.png)
